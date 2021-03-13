@@ -1,0 +1,27 @@
+[
+    {
+    "texture":
+        {
+        "block":["grass","grass2","stone","stone2","emy","coal"]
+        ,"img":["player","mouse"]
+        ,"macine":["stoneput","toplace"]
+        ,"item":["itemcoal","itemiron"]
+        },
+    "ore":
+        {
+            "coal":20
+        },
+    "crafttable":
+        {
+            "stoneput":
+            {
+                "iron":5
+            },
+            "toplace":
+            {
+                "stone":2
+            }
+        }
+    }
+    
+]
