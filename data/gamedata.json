@@ -4,7 +4,7 @@
         {
         "block":["grass","grass2","stone","stone2","emy","coal"]
         ,"img":["player","mouse"]
-        ,"macine":["stoneput","toplace"]
+        ,"machine":["stoneput","toplace"]
         ,"item":["itemcoal","itemiron"]
         },
     "ore":
@@ -20,8 +20,15 @@
             "toplace":
             {
                 "stone":2
+            },
+            "comp_stone":{
+                "stone":12
             }
         }
+    },
+    {
+        "version":"0.2.1(DEMO 1)",
+        "music":0,
+        "debug":1
     }
-    
 ]
