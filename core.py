@@ -1,44 +1,28 @@
 import random as rd
 import pygame as pg
-import sys,time,deepcloud
+import sys,time
 from configmanager import *
 from pygame.locals import *
 import copy
+import gamelogger
+from local import *
+import gameGUI as GUI
 
-class point:
-    def __init__(self,x=0,y=0):
-        self.x=x
-        self.y=y
-    def _list(self):
-        return (self.x,self.y)
-    def copy(self):
-        return point(self.x,self.y)
-    def __add__(self,obj):
-        return point(self.x+obj.x,self.y+obj.y)
-    def __mul__(self,obj):
-        # only mul int
-        return point(self.x*obj,self.y*obj)
-    def __sub__(self,obj):
-        return point(self.x-obj.x,self.y-obj.y)
-    def __div__(self,obj):
-        return point(self.x/obj,self.y/obj)
-    def __str__(self):
-        return '{x:%s,y:%s}' %(self.x,self.y)
 pg.init()
-
+pg.mixer.init()
 WINDOW=point(800,800)
 CHUNKRANGE=10
 CHUNKWID=CHUNKRANGE*16
 SHOWRADIUS=1
 SPEED=4
-BEED=10
+BEED=114514
 DEEPTH=1
 SCREENWID=(SHOWRADIUS+1)*CHUNKWID
 MAXITEM=8
 
 r=rd.Random(BEED)
 nm_font=pg.font.Font(None,20)
-#RESIMG=['stone.png','stone2.png','grass.png','grass2.png','emy.png']
+
 
 def printtext(text,font,pt,bs,color=(255,255,255),shadow=0):
     screen = bs
@@ -47,58 +31,6 @@ def printtext(text,font,pt,bs,color=(255,255,255),shadow=0):
         screen.blit(image,(pt.x+shadow,pt.y+shadow))
     image=font.render(text,True,color)
     screen.blit(image,(pt.x,pt.y))
-class item:
-    def __init__(self,name,texture=None):
-        self.texture=texture
-        self.name=name
-        self.sltexture=pg.transform.smoothscale(texture,(8,8)) if self.texture else None
-    def smdraw(self,bs,pt):
-        if self.sltexture:bs.blit(self.sltexture,pt._list())
-    def copy(self):
-        return copy.copy(self)
-class block(item):
-    def draw(self,bs,pt):
-        if self.texture:bs.blit(self.texture,pt._list())
-class macine(block):
-    def __init__(self,name,texture=None):
-        super().__init__(name,texture)
-        self.name=name
-        self.inp=[]
-        self.out=[]
-        self.texture=texture
-        self.dow=None
-        self.near=[]
-        self.ct=0
-        self.down=''
-    def putdown_init(self):
-        pass
-    def update(self):
-        pass
-    def iteminput(self,item):
-        pass
-    def itemoutput(self,item):
-        pass
-class oregen(macine):
-    def __init__(self,name,cfg,texture=None):
-        super().__init__(self,name,ctg,texture)
-    def updata(self,lst=[]):
-        if not self.down:self.down=lst[-1]
-        self.near=lst[0:-1]
-        if len(self.out)>0:
-            for ck in self.near:
-                if 'output' in self.cfg and ck.name=='toplace':
-                    ck._input(self.out.pop())
-                    break
-        self.ct+=1
-        if self.ct==10:
-            self.ct=0
-            self._output()
-    def _input(self,item):
-        self.inp.append(item)
-    def _output(self):
-        if 'kaicai' in self.cfg:
-            if self.down.name==self.cfg['kaicai']:
-                self.out.append(self.down)
 
 class chunk:
     def __init__(self,rel_pt,chunks,flag=r.choice(['grass','stone','stone'])):
@@ -113,7 +45,7 @@ class chunk:
     def set_block(self,pt,tg,target=None):
         (self.blocks if not target else target)[pt.y*CHUNKRANGE+pt.x]=tg
     def dekblock(self,pt):
-        self.set_block(pt,block('empty').copy(),self.secblocks)
+        self.set_block(pt,RES['empty'].copy(),self.secblocks)
     def putblock(self,pt,tg):
         if self.get_block(pt,self.secblocks).name=='empty':
             self.set_block(pt,tg,self.secblocks)
@@ -152,7 +84,7 @@ class chunk:
     def grass_init(self):
         self.secblocks=[]
         for i in range(CHUNKRANGE**2):
-            self.secblocks.append(block('empty'))
+            self.secblocks.append(RES['empty'])
     def crt_new(self):
         # level 1
         for i in range(CHUNKRANGE**2):
@@ -174,7 +106,7 @@ class chunk:
             elif rn<=4:
                 self.secblocks.append(RES['stone2'].copy())
             else:
-                self.secblocks.append(block('empty').copy())
+                self.secblocks.append(RES['empty'].copy())
         # level 1
         for mk in range(DEEPTH):
             for x in range(CHUNKRANGE):
@@ -190,7 +122,7 @@ class chunk:
                     num=self.getnear(point(x,y),'grass2',self.secblocks)
                     if num>(1 if self.flag=='grass2' else 5):self.set_block(point(x,y),RES['grass2'].copy(),self.secblocks)
                     elif num>(5 if self.flag=='grass2' else 4):self.set_block(point(x,y),RES['stone2'].copy(),self.secblocks)
-                    else:self.set_block(point(x,y),block('empty').copy(),self.secblocks)
+                    else:self.set_block(point(x,y),RES['empty'].copy(),self.secblocks)
     def draw(self,player,bs):
         deffpt=point(WINDOW.x/2-player.pt.x+self.relpt.x*CHUNKWID,WINDOW.y/2-player.pt.y+self.relpt.y*CHUNKWID)
         for x in range(CHUNKRANGE):
@@ -228,17 +160,17 @@ class player:
         left=now[2].get_block(now[3],now[2].secblocks)
         if floor.name!='empty'and left.name!='empty':
             self.pt=self.lastpt
-    def additem(self,item):
+    def additem(self,item,num=1):
         if item.name!='empty':
             i=0
-            for it,num in self.bag:
+            for it,nu in self.bag:
                 if it==item.name:
-                    self.bag[i][1]+=1
+                    self.bag[i][1]+=num
                     break
                 i+=1
             else:
                 if len(self.bag)<12:
-                    self.bag.append([item.name,1])
+                    self.bag.append([item.name,num])
     def getitem(self):
         if self.nowselect<len(self.bag):
             name,num=self.bag[self.nowselect]
@@ -258,23 +190,54 @@ class player:
             # error
             pass
     def change_select(self,num):
-        # input 1-MAXITEM
-        if num<=MAXITEM:
+        # input 0-MAXITEM-1
+        if num<MAXITEM:
             self.nowselect=num
             
-        
+class crafttable(GUI.frame):
+    class inlinelabel(GUI.label):
+        def __init__(self,table,text,pt,scr,ftcolor,bgcolor=(255,255,255),ft=GUI.nm_font,sid=''):
+            super().__init__(text,pt,scr,ftcolor,bgcolor,ft,sid)
+            self.t=table
+        def handle(self,mx,my,evt):
+            if evt[0]:
+                self.t.setfocus(self.sid)
+    def __init__(self,craftconfig,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.craftconfig=craftconfig
+        self.tatget=''
+        pt=point(5,50)
+        self.addcont(crafttable.inlinelabel(self,'合成...',point(2,2),self.scr,(150,150,120),(50,100,100),ft=GUI.middle_font,sid='title'))
+        for it,value in self.craftconfig.items():
+            need=it+' '+','.join(['%s:%s' %(item,num) for item,num in value.items()])
+            self.addcont(crafttable.inlinelabel(self,need,pt,self.scr,(150,150,80),(50,100,100),sid=it))
+            pt.y+=15
+    def handle(self):
+        super().handle()
+    def setfocus(self,sid):
+        self.target=sid
+    def draw(self):
+        super().draw()
 class game:
-    def __init__(self,bs,name,texture,mouse,pt=point(0,0)):
+    def __init__(self,bs,name,texture,mouse,jsonconfig,pt=point(0,0),nonload=False):
         self.player=player(name,texture,pt)
         self.chunks=dict()
         self.bs=bs
-        self.newchunk(point(0,0))
+        if not nonload:
+            self.newchunk(point(0,0))
+            self.chunks[(0,0)].grass_init()
+        self.items=[]
+        # mouse vars
         self.mpos=point(0,0)
         self.mouse=mouse
-        self.chunks[(0,0)].grass_init()
-        self.items=[]
+        # board
         self.board=pg.Surface((100,180))
         self.board.fill((50,60,80))
+        # config
+        self.config=jsonconfig
+        self.guimanager=GUI.framemanager()
+        # table
+        self.table=crafttable(self.config[0]['crafttable'],point(WINDOW.x//2-150,WINDOW.y//2-100),300,200,self.bs,sid='craft')
     def newitem(self,pt,item):
         self.items.append((pt,item))
     def removeitem(self,item):
@@ -321,6 +284,12 @@ class game:
         self.player.move(strs)
     def drawmouse(self):
         self.bs.blit(self.mouse,(self.mpos)._list())
+    def opentable(self):
+        if self.guimanager.isin('craft'):
+            # close the table
+            self.guimanager.delcont('craft')
+        else:
+            self.guimanager.addcont(self.table,mux=True)
     def draw(self):
         # draw blocks
         i=0
@@ -363,7 +332,7 @@ class game:
                   ' player_chunk:'+str(self.getchunkpoint(self.getplayernow())) +
                   ' mouse_pos:'+str(self.mpos)
                   ,nm_font,point(1,1),self.bs)
-        printtext('DEMO1',nm_font,point(1,15),self.bs,(50,80,150))
+        printtext(self.config[1]['version'],nm_font,point(1,15),self.bs,(50,80,150))
         # draw player
         self.player.draw(self.bs)
         self.drawmouse()
@@ -372,12 +341,13 @@ class game:
         p=point(WINDOW.x-90,WINDOW.y-170)
         i=1
         for item,num in self.player.bag:
-            if item in config['block']:
-                dtemp=RES[item]
+
+            if item in config['items']:
+                dtemp=RESITEMS[item]
             else:
                 print('Warning:machine in bag')
                 continue
-            if self.player.nowselect+1==i:
+            if self.player.nowselect==i-1:
                 # draw select
                 pg.draw.rect(self.bs,(200,200,200),pg.Rect(p.x-2,p.y-2,88,16),2)
             dtemp.smdraw(self.bs,p)
@@ -385,7 +355,9 @@ class game:
             printtext(str(num),nm_font,point(p.x+20,p.y),self.bs)
             p.y+=14
             i+=1
-        
+        #draw GUI
+        self.guimanager.handle()
+        self.guimanager.draw()
     def mousehandle(self,button,mpos):
         self.mpos=point(mpos.x//16*16,mpos.y//16*16)-point(self.player.pt.x%16,self.player.pt.y%16)
         if button[0]:
@@ -395,7 +367,9 @@ class game:
             if not c:
                 return False
             pot=self._getckpoint(tp,c.relpt)
-            self.newitem(tp,c.get_block(pot,target=c.secblocks))
+            if c.get_block(pot,c.secblocks).name=='empty':
+                return
+            self.newitem(tp+point(r.randint(-2,2),r.randint(-2,2)),c.get_block(pot,target=c.secblocks))
             c.dekblock(pot)
             # new item
         elif button[2]:
@@ -410,26 +384,3 @@ class game:
         else:pass
     def change_select(self,num):
         return self.player.change_select(num)
-if __name__=='__main__':
-    scr=pg.display.set_mode(WINDOW._list())
-    #deepcloud.draw_logo()
-    load_config()
-    startload()
-    pg.display.set_caption('Endless factory DEMO_1')
-    g=game(scr,'swwm',RESIMG['player'],RESIMG['mouse'])
-    g.player.bag.append(['stone2',114514])
-    while True:
-        for evt in pg.event.get():
-            if evt.type==QUIT:sys.exit(0) 
-        mps=pg.mouse.get_pos()
-        g.mousehandle(pg.mouse.get_pressed(),point(mps[0],mps[1]))
-        keys=pg.key.get_pressed()
-        if keys[K_UP]:g.move('up')
-        elif keys[K_DOWN]:g.move('down')
-        elif keys[K_RIGHT]:g.move('right')
-        elif keys[K_LEFT]:g.move('left')
-        elif 1 in keys[48:48+MAXITEM+1]:
-            g.change_select(keys[48:48+MAXITEM+1].index(1))
-        scr.fill((0,0,0))
-        g.draw()
-        pg.display.update()
