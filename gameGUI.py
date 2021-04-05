@@ -3,8 +3,9 @@ from pygame.locals import *
 from local import *
 
 pg.init()
-nm_font=pg.font.Font(None,20)
-big_font=pg.font.Font('data/Liberation Mono.ttf',40)
+nm_font=pg.font.Font('font/Liberation Mono.ttf',13)
+big_font=pg.font.Font('font/Liberation Mono.ttf',40)
+middle_font=pg.font.Font('font/MicrosoftYaqiHeiLight-2.ttf',24)
 def printtext(text,font,pt,bs,color=(255,255,255),shadow=0):
     screen = bs
     if shadow:
@@ -51,9 +52,10 @@ class button(cont):
         if evt[2]:
             self.keyflag=False
 class label(cont):
-    def __init__(self,text,pt,scr,ftcolor,bgcolor=(255,255,255),ft=nm_font):
+    def __init__(self,text,pt,scr,ftcolor,bgcolor=(255,255,255),ft=nm_font,sid=''):
         self.pt=pt
         self.scr=scr
+        self.sid=sid
         image=ft.render(text,True,ftcolor)
         self.surface=pg.Surface(image.get_size())
         self.surface.fill(bgcolor)
@@ -63,7 +65,7 @@ class label(cont):
     def handle(self,*args):
         pass
 class frame(cont):
-    def __init__(self,pt,weight,height,scr,sid='',bgcolor=(50,100,100)):
+    def __init__(self,pt,weight,height,scr,bgcolor=(50,100,100),sid=''):
         self.pt=pt
         self.scr=scr
         # sid -> frame id

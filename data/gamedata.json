@@ -2,7 +2,7 @@
     {
     "texture":
         {
-        "block":["grass","grass2","stone","stone2","emy","coal"]
+        "block":["grass","grass2","stone","stone2","empty","coal"]
         ,"img":["player","mouse"]
         ,"machine":["stoneput","toplace"]
         ,"item":["itemcoal","itemiron"]
@@ -15,20 +15,27 @@
         {
             "stoneput":
             {
-                "iron":5
+                "itemiron":5
             },
             "toplace":
             {
-                "stone":2
+                "stone2":2
             },
             "comp_stone":{
-                "stone":12
+                "stone2":12
+            },
+            "114514":{
+                "stone2":114514,
+                "itemiron":114514,
+                "itemcoal":114514,
+                "comp_stone":114514
             }
         }
     },
     {
-        "version":"0.2.1(DEMO 1)",
+        "version":"0.2.8(DEMO 1)",
         "music":0,
-        "debug":1
+        "debug":1,
+    "playlist":["Blue"]
     }
 ]

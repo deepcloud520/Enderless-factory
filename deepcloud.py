@@ -19,4 +19,4 @@ def draw_logo(ft=None):
         pg.display.update()
     time.sleep(0.03)
     printtext('Deep Cloud',pg.font.Font(ft,wid//5),wid//11+5,hei//2-hei//15)
-    time.sleep(2)
+    printtext('Loading...',pg.font.Font(ft,wid//10),wid//11+30,hei//2-hei//15+140,(110,100,120))
