@@ -9,7 +9,7 @@
         },
     "ore":
         {
-            "coal":20
+            "coal":100
         },
     "crafttable":
         {
@@ -33,9 +33,9 @@
         }
     },
     {
-        "version":"0.2.8(DEMO 1)",
-        "music":0,
+        "version":"0.2.9.2(DEMO 1)",
+        "music":1,
         "debug":1,
-    "playlist":["Blue"]
+        "playlist":["sunburst","Blue","home","grace","run_towards_the_sky","幼女幻奏"]
     }
 ]

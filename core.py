@@ -16,7 +16,7 @@ CHUNKWID=CHUNKRANGE*16
 SHOWRADIUS=1
 SPEED=4
 BEED=114514
-DEEPTH=1
+DEEPTH=2
 SCREENWID=(SHOWRADIUS+1)*CHUNKWID
 MAXITEM=8
 
@@ -88,22 +88,16 @@ class chunk:
     def crt_new(self):
         # level 1
         for i in range(CHUNKRANGE**2):
-            # add ores
-            for o,pand in ORE.items():
-                if r.randint(0,pand)==0:
-                    self.blocks.append(RES[o])
-                    break
+            if r.randint(0,5 if self.flag=='grass' else 2):
+                self.blocks.append(RES['grass'].copy())
             else:
-                if r.randint(0,3 if self.flag=='grass' else 1):
-                    self.blocks.append(RES['grass'].copy())
-                else:
-                    self.blocks.append(RES['stone'].copy())
+                self.blocks.append(RES['stone'].copy())
         # Level 2
         for i in range(CHUNKRANGE**2):
             rn=r.randint(0,5)
-            if rn<(2 if self.flag=='grass' else 5):
+            if rn<(2 if self.flag=='grass' else 3):
                 self.secblocks.append(RES['grass2'].copy())
-            elif rn<=4:
+            elif rn<=3:
                 self.secblocks.append(RES['stone2'].copy())
             else:
                 self.secblocks.append(RES['empty'].copy())
@@ -111,18 +105,30 @@ class chunk:
         for mk in range(DEEPTH):
             for x in range(CHUNKRANGE):
                 for y in range(CHUNKRANGE):
+                    '''
+                    #old map gener
                     num=self.getnear(point(x,y),'grass')
                     if num>(4 if self.flag=='grass' else 5):self.set_block(point(x,y),RES['grass'].copy())
                     elif num<(3 if self.flag=='grass' else 4):self.set_block(point(x,y),RES['stone'].copy())
-                    
+                    '''
+                    for blocktype in ['grass','stone']:
+                        num=self.getnear(point(x,y),blocktype)
+                        if num>2:
+                            self.set_block(point(x,y),RES[blocktype].copy())
+                    # add ores
+                    for o,pand in ORE.items():
+                        if r.randint(0,pand)==0:
+                            self.set_block(point(x,y),RES[o].copy())
+                    for blocktype in ['grass2','stone2','empty']:
+                        num=self.getnear(point(x,y),blocktype,target=self.secblocks)
+                        if num>2:
+                            self.set_block(point(x,y),RES[blocktype].copy(),target=self.secblocks) 
+        '''         
         # level 2
         for mk in range(DEEPTH):
             for x in range(CHUNKRANGE):
                 for y in range(CHUNKRANGE):
-                    num=self.getnear(point(x,y),'grass2',self.secblocks)
-                    if num>(1 if self.flag=='grass2' else 5):self.set_block(point(x,y),RES['grass2'].copy(),self.secblocks)
-                    elif num>(5 if self.flag=='grass2' else 4):self.set_block(point(x,y),RES['stone2'].copy(),self.secblocks)
-                    else:self.set_block(point(x,y),RES['empty'].copy(),self.secblocks)
+        '''          
     def draw(self,player,bs):
         deffpt=point(WINDOW.x/2-player.pt.x+self.relpt.x*CHUNKWID,WINDOW.y/2-player.pt.y+self.relpt.y*CHUNKWID)
         for x in range(CHUNKRANGE):
@@ -330,7 +336,8 @@ class game:
                   ' ALLCHUNKS:'+str(len(self.chunks)) +
                   ' chunkpos:' + str(self.getplayernow()) +
                   ' player_chunk:'+str(self.getchunkpoint(self.getplayernow())) +
-                  ' mouse_pos:'+str(self.mpos)
+                  ' mouse_pos:'+str(self.mpos) +
+                  ' chunktype:'+self.chunks[self.getplayernow()._list()].flag
                   ,nm_font,point(1,1),self.bs)
         printtext(self.config[1]['version'],nm_font,point(1,15),self.bs,(50,80,150))
         # draw player
@@ -376,6 +383,8 @@ class game:
             # right button
             tp=self.mpos-point(WINDOW.x//2,WINDOW.y//2)+self.player.pt
             c=self.getchunk(self.getpoint(tp))
+            if not c:
+                return False
             pot=self._getckpoint(tp,c.relpt)
             
             if c.get_block(pot,c.secblocks).name=='empty':

@@ -21,11 +21,12 @@ class cont:
     def handle(self):
         pass
 class button(cont):
-    def __init__(self,text,pt,fun,weight,height,color,fontcolor,scr,hold_on=False):
+    def __init__(self,text,pt,fun,weight,height,color,fontcolor,scr,hold_on=False,font=nm_font,sid=''):
         self.pt=pt
         self.h=height
         self.w=weight
         self.scr=scr
+        self.sid=sid
         # init const button surface
         self.surface=pg.Surface((weight,height))
         self.surface.fill(color)
@@ -47,8 +48,9 @@ class button(cont):
             if not self.keyflag:
                 if mx<self.pt.x or my<self.pt.y or mx>self.pt.x+self.w or my>self.pt.y+self.h:
                     return False
-                self.keyflag=True if not self.holdon else False
-                self.fun()
+                self.keyflag=True if self.holdon else False
+                if self.sid:self.fun(self.sid)
+                else:self.fun()
         if evt[2]:
             self.keyflag=False
 class label(cont):
@@ -96,9 +98,10 @@ class framemanager(frame):
     def __init__(self):
         self.mxlst=[]
         self.contlst=[]
+        self.hide=[]
     def draw(self):
         for c in self.contlst:
-            c.draw()
+            if c.sid not in self.hide:c.draw()
     def addcont(self,lastcont,mux=False):
         self.contlst.append(lastcont)
         if mux:
@@ -106,7 +109,7 @@ class framemanager(frame):
             self.mxlst.append(lastcont.sid)
     def handle(self):
         for c in self.contlst:
-            c.handle()
+            if c.sid not in self.hide:c.handle()
     def delcont(self,sid):
         for c in self.contlst:
             if c.sid==sid:
@@ -115,6 +118,10 @@ class framemanager(frame):
                 return
     def isin(self,sid):
         return sid in self.mxlst
+    def hidecont(self,sid):
+        self.hide.append(sid)
+    def showcont(self,sid):
+        self.hide.remove(sid)
 # Dont use dialog!!!
 class dialog(frame):
     def __init__(self,title,pt,weight,height,scr,bgcolor=(255,180,180),titcolor=(100,100,255),ftcolor=(0,0,0)):

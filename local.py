@@ -1,6 +1,9 @@
 import pygame as pg
 import copy
+import core
 pg.init()
+
+# Planktolovania
 
 class point:
     def __init__(self,x=0,y=0):
@@ -33,6 +36,8 @@ class item:
 class block(item):
     def draw(self,bs,pt):
         if self.texture:bs.blit(self.texture,pt._list())
+    def init(self,pt):
+        self.pt=pt
 class machine(block):
     def __init__(self,name,texture=None):
         super().__init__(name,texture)
@@ -55,21 +60,19 @@ class machine(block):
 class oregen(machine):
     def __init__(self,name,cfg,texture=None):
         super().__init__(self,name,ctg,texture)
-    def updata(self,lst=[]):
-        if not self.down:self.down=lst[-1]
-        self.near=lst[0:-1]
+    def init(self,pt,game):
+        super().init(pt)
+        self.g=game
+    def updata(self):
         if len(self.out)>0:
-            for ck in self.near:
-                if 'output' in self.cfg and ck.name=='toplace':
-                    ck._input(self.out.pop())
+            for ck in g.getnear(self.point()):
+                if 'output' in self.cfg:
+                    ck.iteminput(self.out.pop())
                     break
         self.ct+=1
         if self.ct==10:
             self.ct=0
-            self._output()
-    def _input(self,item):
+    def iteminput(self,item):
         self.inp.append(item)
-    def _output(self):
-        if 'kaicai' in self.cfg:
-            if self.down.name==self.cfg['kaicai']:
-                self.out.append(self.down)
+    def itemoutput(self):
+        return self.out.pop() if len(self.out)>0 else None
