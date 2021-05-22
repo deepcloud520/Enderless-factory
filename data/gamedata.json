@@ -2,10 +2,86 @@
     {
     "texture":
         {
-        "block":["grass","grass2","stone","stone2","empty","coal"]
-        ,"img":["player","mouse"]
-        ,"machine":["stoneput","toplace"]
-        ,"item":["itemcoal","itemiron"]
+            "mouse":"texture/mouse",
+            "player":"texture/player"
+        },
+    "items":{
+        "itemcoal":
+            {
+                "type":"item",
+                "texture":"texture/itemcoal",
+                "vars":{}
+            
+            },
+        "itemiron":
+            {
+                "type":"item",
+                "texture":"texture/itemiron",
+                "vars":{}
+            
+            },
+        "coal":
+            {
+                "type":"block",
+                "texture":"texture/coal",
+                "vars":{}
+            
+            },
+        "comp_stone":
+            {
+                "type":"block",
+                "texture":"texture/comp_stone",
+                "vars":{}
+            
+            },
+        "empty":
+            {
+                "type":"block",
+                "texture":"texture/empty",
+                "vars":{}
+            
+            },
+        "grass":
+            {
+                "type":"block",
+                "texture":"texture/grass",
+                "vars":{}
+            
+            },
+        "grass2":
+            {
+                "type":"block",
+                "texture":"texture/grass2",
+                "vars":{}
+            
+            },
+        "stone":
+            {
+                "type":"block",
+                "texture":"texture/stone",
+                "vars":{}
+            
+            },
+        "stone2":
+            {
+                "type":"block",
+                "texture":"texture/stone2",
+                "vars":{}
+            
+            },
+        "stoneput":
+            {
+                "type":"oregen",
+                "texture":"texture/stoneput",
+                "vars":{}
+            
+            },
+        "toplace":
+            {
+                "type":"block",
+                "texture":"texture/toplace",
+                "vars":{}
+            }
         },
     "ore":
         {
@@ -33,9 +109,9 @@
         }
     },
     {
-        "version":"0.2.9.2(DEMO 1)",
+        "version":"0.2.9.8(DEMO 2)",
         "music":1,
-        "debug":1,
+        "debug":0,
         "playlist":["sunburst","Blue","home","grace","run_towards_the_sky","幼女幻奏"]
     }
 ]

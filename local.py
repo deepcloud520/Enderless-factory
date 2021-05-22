@@ -42,15 +42,11 @@ class machine(block):
     def __init__(self,name,texture=None):
         super().__init__(name,texture)
         self.name=name
-        self.inp=[]
-        self.out=[]
+        self.itemlist=[]
         self.texture=texture
-        self.dow=None
-        self.near=[]
-        self.ct=0
-        self.down=''
-    def putdown_init(self):
-        pass
+        self.g=None
+    def putdown_init(self,game):
+        sself.g=game
     def update(self):
         pass
     def iteminput(self,item):
@@ -58,20 +54,13 @@ class machine(block):
     def itemoutput(self,item):
         pass
 class oregen(machine):
-    def __init__(self,name,cfg,texture=None):
-        super().__init__(self,name,ctg,texture)
+    def __init__(self,name,texture=None):
+        super().__init__(name,texture)
     def init(self,pt,game):
         super().init(pt)
         self.g=game
-    def updata(self):
-        if len(self.out)>0:
-            for ck in g.getnear(self.point()):
-                if 'output' in self.cfg:
-                    ck.iteminput(self.out.pop())
-                    break
-        self.ct+=1
-        if self.ct==10:
-            self.ct=0
+    def updata(self,tick):
+        pass
     def iteminput(self,item):
         self.inp.append(item)
     def itemoutput(self):

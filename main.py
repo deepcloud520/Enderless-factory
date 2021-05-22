@@ -17,7 +17,7 @@ def savenow():
     logger('world saving...','info')
     pkg=save.worldcase()
     pkg.dump(g,'player','mouse')
-    f=open('save/world1.pkg',mode='wb')
+    f=open('save/'+target,mode='wb')
     f.write(pkg.picgame)
     f.close()
     logger('world save done.','info')
@@ -55,7 +55,7 @@ if __name__=='__main__':
     scr=pg.display.set_mode(WINDOW._list())
     json_config=load_config()
     startload()
-    save.init(config,res=RES,resitem=RESITEM,resitems=RESITEMS,resimg=RESIMG,version=VERSION,jsonconfig=json_config)
+    save.init(config,resitems=RESITEMS,resimg=RESIMG,version=VERSION,jsonconfig=json_config)
     pg.display.set_caption('Enderless Factory '+json_config[1]['version'])
     # continue the GUI and welcome screen
     if not int(json_config[1]['debug']): 
@@ -79,8 +79,10 @@ if __name__=='__main__':
         logger('music loading.','info')
         channel=pg.mixer.find_channel(True)
         music=[]
+        r.shuffle(json_config[1]['playlist'])
         for sound in json_config[1]['playlist']:
             music.append(pg.mixer.Sound('music/'+sound+'.ogg'))
+            print('.',end='')
         logger('music load complete.','info')
         channel.set_endevent(USEREVENT)
         NOWPLAY=0
@@ -114,10 +116,12 @@ if __name__=='__main__':
     logger('game start.','info')
     if gamestat==1:
         g=game(scr,'swwm',RESIMG['player'],RESIMG['mouse'],json_config)
+        '''
         g.player.bag.append(['grass2',114514])
         g.player.bag.append(['itemcoal',114514])
         g.player.bag.append(['itemiron',114514])
         g.player.bag.append(['stone2',114514])
+        '''
     while True:
         for evt in pg.event.get():
             if evt.type==QUIT:

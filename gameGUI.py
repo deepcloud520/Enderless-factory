@@ -92,8 +92,14 @@ class frame(cont):
             # get local x,y
             mx-=self.pt.x
             my-=self.pt.y
+            holdon=False
             for c in self.contlst:
                 c.handle(mx,my,pg.mouse.get_pressed())
+                if hasattr(c,'holdon'):
+                    if (not holdon) and c.holdon and c.keyflag:
+                        holdon=True
+                    elif holdon and c.holdon and c.keyflag:
+                        c.keyflag=False
 class framemanager(frame):
     def __init__(self):
         self.mxlst=[]

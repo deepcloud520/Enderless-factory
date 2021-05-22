@@ -37,16 +37,13 @@ import pickle as pk
 
 # load:file->game
 # dump:game->file
-def init(cg,res,resimg,resitem,resitems,version,jsonconfig):
-    
-    global config,RES,RESIMG,RESITEM,RESITEMS,VERSION,json_config
+def init(cg,resimg,resitems,version,jsonconfig):
+    global config,RESIMG,RESITEMS,VERSION,json_config
     config=cg
-    RES=res
     json_config=jsonconfig
     VERSION=version
     RESIMG=resimg
     RESITEMS=resitems
-    RESITEM=resitem
     
 class worldcase:
     def __init__(self):

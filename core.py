@@ -16,7 +16,7 @@ CHUNKWID=CHUNKRANGE*16
 SHOWRADIUS=1
 SPEED=4
 BEED=114514
-DEEPTH=2
+DEEPTH=3
 SCREENWID=(SHOWRADIUS+1)*CHUNKWID
 MAXITEM=8
 
@@ -45,7 +45,7 @@ class chunk:
     def set_block(self,pt,tg,target=None):
         (self.blocks if not target else target)[pt.y*CHUNKRANGE+pt.x]=tg
     def dekblock(self,pt):
-        self.set_block(pt,RES['empty'].copy(),self.secblocks)
+        self.set_block(pt,RESITEM['empty'].copy(),self.secblocks)
     def putblock(self,pt,tg):
         if self.get_block(pt,self.secblocks).name=='empty':
             self.set_block(pt,tg,self.secblocks)
@@ -84,23 +84,23 @@ class chunk:
     def grass_init(self):
         self.secblocks=[]
         for i in range(CHUNKRANGE**2):
-            self.secblocks.append(RES['empty'])
+            self.secblocks.append(RESITEMS['empty'])
     def crt_new(self):
         # level 1
         for i in range(CHUNKRANGE**2):
             if r.randint(0,5 if self.flag=='grass' else 2):
-                self.blocks.append(RES['grass'].copy())
+                self.blocks.append(RESITEMS['grass'].copy())
             else:
-                self.blocks.append(RES['stone'].copy())
+                self.blocks.append(RESITEMS['stone'].copy())
         # Level 2
         for i in range(CHUNKRANGE**2):
             rn=r.randint(0,5)
             if rn<(2 if self.flag=='grass' else 3):
-                self.secblocks.append(RES['grass2'].copy())
+                self.secblocks.append(RESITEMS['grass2'].copy())
             elif rn<=3:
-                self.secblocks.append(RES['stone2'].copy())
+                self.secblocks.append(RESITEMS['stone2'].copy())
             else:
-                self.secblocks.append(RES['empty'].copy())
+                self.secblocks.append(RESITEMS['empty'].copy())
         # level 1
         for mk in range(DEEPTH):
             for x in range(CHUNKRANGE):
@@ -108,21 +108,21 @@ class chunk:
                     '''
                     #old map gener
                     num=self.getnear(point(x,y),'grass')
-                    if num>(4 if self.flag=='grass' else 5):self.set_block(point(x,y),RES['grass'].copy())
-                    elif num<(3 if self.flag=='grass' else 4):self.set_block(point(x,y),RES['stone'].copy())
+                    if num>(4 if self.flag=='grass' else 5):self.set_block(point(x,y),RESITEMS['grass'].copy())
+                    elif num<(3 if self.flag=='grass' else 4):self.set_block(point(x,y),RESITEMS['stone'].copy())
                     '''
                     for blocktype in ['grass','stone']:
                         num=self.getnear(point(x,y),blocktype)
                         if num>2:
-                            self.set_block(point(x,y),RES[blocktype].copy())
+                            self.set_block(point(x,y),RESITEMS[blocktype].copy())
                     # add ores
                     for o,pand in ORE.items():
                         if r.randint(0,pand)==0:
-                            self.set_block(point(x,y),RES[o].copy())
+                            self.set_block(point(x,y),RESITEMS[o].copy())
                     for blocktype in ['grass2','stone2','empty']:
                         num=self.getnear(point(x,y),blocktype,target=self.secblocks)
                         if num>2:
-                            self.set_block(point(x,y),RES[blocktype].copy(),target=self.secblocks) 
+                            self.set_block(point(x,y),RESITEMS[blocktype].copy(),target=self.secblocks) 
         '''         
         # level 2
         for mk in range(DEEPTH):
@@ -183,15 +183,15 @@ class player:
         else:
             return
         ret=None
-        if name in RES:
-            ret=RES[name].copy()
+        if name in RESITEMS:
+            ret=RESITEMS[name].copy()
             if self.bag[self.nowselect][1]>1:
                 self.bag[self.nowselect][1]-=1
             else:
                 self.bag.pop(self.nowselect)
             return ret
-        elif name in RESITEM:
-            ret=RESITEM[name].copy()
+        elif name in RESITEMSS:
+            ret=RESITEMSS[name].copy()
         else:
             # error
             pass
@@ -296,6 +296,20 @@ class game:
             self.guimanager.delcont('craft')
         else:
             self.guimanager.addcont(self.table,mux=True)
+    def getblock(self,pos,layer=0):
+        # layer:0=chunk.blocks 1=self.secblocks
+        c=self.getchunk(self.getpoint(tp))
+        if not c:
+            return None
+        pot=self._getckpoint(tp,c.relpt)
+        return c.get_block(pot,target=c.blocks if layer==0 else c.secblocks)
+    def getblock(self,pos,block,layer=0):
+        # layer:0=chunk.blocks 1=self.secblocks
+        c=self.getchunk(self.getpoint(tp))
+        if not c:
+            return None
+        pot=self._getckpoint(tp,c.relpt)
+        return c.set_block(pot,block,target=c.blocks if layer==0 else c.secblocks)
     def draw(self):
         # draw blocks
         i=0
@@ -348,12 +362,15 @@ class game:
         p=point(WINDOW.x-90,WINDOW.y-170)
         i=1
         for item,num in self.player.bag:
-
+            '''
             if item in config['items']:
-                dtemp=RESITEMS[item]
+            '''
+            dtemp=RESITEMS[item]
+            '''
             else:
                 print('Warning:machine in bag')
                 continue
+                '''
             if self.player.nowselect==i-1:
                 # draw select
                 pg.draw.rect(self.bs,(200,200,200),pg.Rect(p.x-2,p.y-2,88,16),2)
