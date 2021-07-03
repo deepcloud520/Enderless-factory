@@ -24,11 +24,6 @@ def load_config():
     return json_config
 def loadres(file):
     return pg.image.load(file+'.png').convert_alpha()
-'''
-def getobject(obj,name):
-    lt=dir(obj)
-    return getattr(obj,name,None)
-'''
 def startload():
     global RESIMG,RESITEMS
     for itemname,value in config.items():
@@ -42,3 +37,17 @@ def startload():
         RESIMG.update({imgname:texture})
     logger('texture load complete','info')
         
+def getitemconfig(name):
+    global json_config
+    return json_config[0]['items'][name]
+def getresour(name):
+    global RESIMG
+    return RESIMG[name]
+def getitem(name):
+    return getitem_uncopy(name).copy()
+def getitem_uncopy(name):
+    global RESITEMS
+    return RESITEMS[name]
+def getjsonconfig():
+    global json_config
+    return json_config

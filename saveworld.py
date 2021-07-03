@@ -29,14 +29,11 @@
 #
 # Stay your Determination!
 #
-
-import core
-from local import *
-import json
 import pickle as pk
-
+import copy
 # load:file->game
 # dump:game->file
+'''
 def init(cg,resimg,resitems,version,jsonconfig):
     global config,RESIMG,RESITEMS,VERSION,json_config
     config=cg
@@ -44,11 +41,20 @@ def init(cg,resimg,resitems,version,jsonconfig):
     VERSION=version
     RESIMG=resimg
     RESITEMS=resitems
-    
+    '''
+class saveable:
+    # implement
+    def copy(self):
+        return copy.copy(self)
+    def dump(self):
+        pass
+    def load(self):
+        pass
 class worldcase:
     def __init__(self):
         self.picgame=None
-    def dump(self,g,texture,mouse):
+    def dump(self,g):
+        '''
         chunks=dict()
         for rel_pt,c in g.chunks.items():
             bk=[]
@@ -56,9 +62,9 @@ class worldcase:
             for block in c.blocks:
                 bk.append(mapblock(block.name))
             for secblock in c.secblocks:
-                if secblock.name in config['block']:
+                if secblock.name in :
                     secbk.append(mapblock(secblock.name))
-                elif secblock.name in config['machine']:
+                elif secblock.name :
                     secbk.append(secblock.dump())
             chunks.update({rel_pt:mapchunk(point(*rel_pt),c.flag,bk,secbk)})
         # step 2
@@ -69,8 +75,11 @@ class worldcase:
             items.append((pos,it.name))
         mg=mapgame(g.player.name,texture,mouse,json_config,g.player.pt,items,chunks,g.player.bag)
         self.picgame=pk.dumps(mg)
+        '''
+        self.picgame=pk.dumps(g.dump())
     def load(self):
         return pk.loads(self.picgame)
+'''
 class mapgame:
     def __init__(self,name,texture,mouse,cg,pt,items,chunks,bag):
         self.name=name
@@ -94,18 +103,6 @@ class mapgame:
         # third: dump player
         g.player=self.player.load()
         return g
-
-class mapplayer:
-    def __init__(self,name,texture,bag,pt):
-        self.name=name
-        self.texture=texture
-        self.bag=bag
-        self.pt=pt
-    def load(self):
-        p=core.player(self.name,RESIMG[self.texture])
-        p.bag=self.bag
-        p.pt=self.pt
-        return p
 class mapchunk:
     def __init__(self,rel_pt,flag,blocks,secblocks):
         self.rel_pt=rel_pt
@@ -124,21 +121,8 @@ class mapchunk:
         for it in self.blocks:
             bk.append(it.load())
         for secit in self.secblocks:
-            '''if it.name in config['machine']:
-                ret.secblocks.append(it.dump())
-            else:'''
             secbk.append(secit.load())
         ret.blocks=bk
         ret.secblocks=secbk
         return {self.rel_pt._list():ret}
-class mapitem:
-    def __init__(self,name):
-        self.name=name
-        self.texture=None
-        self.smdtexture=None
-    def load(self):
-        return RESITEMS[self.name].copy()
-class mapblock(mapitem):
-    pass
-class mapmachine(mapblock):
-    pass
+'''

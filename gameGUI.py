@@ -6,6 +6,7 @@ pg.init()
 nm_font=pg.font.Font('font/Liberation Mono.ttf',13)
 big_font=pg.font.Font('font/Liberation Mono.ttf',40)
 middle_font=pg.font.Font('font/MicrosoftYaqiHeiLight-2.ttf',24)
+big_chinese=pg.font.Font('font/MicrosoftYaqiHeiLight-2.ttf',40)
 def printtext(text,font,pt,bs,color=(255,255,255),shadow=0):
     screen = bs
     if shadow:
@@ -100,7 +101,7 @@ class frame(cont):
                         holdon=True
                     elif holdon and c.holdon and c.keyflag:
                         c.keyflag=False
-class framemanager(frame):
+class framemanager():
     def __init__(self):
         self.mxlst=[]
         self.contlst=[]

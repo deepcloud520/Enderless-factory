@@ -1,6 +1,7 @@
 import pygame as pg
 import copy
-import core
+from configmanager import loadres,getitemconfig,getitem_uncopy
+from saveworld import saveable
 pg.init()
 
 # Planktolovania
@@ -24,15 +25,19 @@ class point:
         return point(self.x/obj,self.y/obj)
     def __str__(self):
         return '{x:%s,y:%s}' %(self.x,self.y)
-class item:
+class item(saveable):
     def __init__(self,name,texture=None):
         self.texture=texture
         self.name=name
         self.sltexture=pg.transform.smoothscale(texture,(8,8)) if self.texture else None
     def smdraw(self,bs,pt):
         if self.sltexture:bs.blit(self.sltexture,pt._list())
-    def copy(self):
-        return copy.copy(self)
+    def load(self):
+        self.__init__(self.name,getitem_uncopy(self.name).texture)
+    def dump(self):
+        self.texture=None
+        self.sltexture=None
+        return self
 class block(item):
     def draw(self,bs,pt):
         if self.texture:bs.blit(self.texture,pt._list())
@@ -46,7 +51,7 @@ class machine(block):
         self.texture=texture
         self.g=None
     def putdown_init(self,game):
-        sself.g=game
+        self.g=game
     def update(self):
         pass
     def iteminput(self,item):

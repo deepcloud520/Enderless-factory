@@ -1,12 +1,15 @@
 import random as rd
 import pygame as pg
 import sys,time
+import copy
+
+from local import *
 from configmanager import *
 from pygame.locals import *
-import copy
 import gamelogger
-from local import *
 import gameGUI as GUI
+from saveworld import saveable
+from main import get_game
 
 pg.init()
 pg.mixer.init()
@@ -16,7 +19,7 @@ CHUNKWID=CHUNKRANGE*16
 SHOWRADIUS=1
 SPEED=4
 BEED=114514
-DEEPTH=3
+DEEPTH=1
 SCREENWID=(SHOWRADIUS+1)*CHUNKWID
 MAXITEM=8
 
@@ -32,7 +35,7 @@ def printtext(text,font,pt,bs,color=(255,255,255),shadow=0):
     image=font.render(text,True,color)
     screen.blit(image,(pt.x,pt.y))
 
-class chunk:
+class chunk(saveable):
     def __init__(self,rel_pt,chunks,flag=r.choice(['grass','stone','stone'])):
         self.relpt=rel_pt
         self.blocks=[]
@@ -45,7 +48,7 @@ class chunk:
     def set_block(self,pt,tg,target=None):
         (self.blocks if not target else target)[pt.y*CHUNKRANGE+pt.x]=tg
     def dekblock(self,pt):
-        self.set_block(pt,RESITEM['empty'].copy(),self.secblocks)
+        self.set_block(pt,RESITEMS['empty'].copy(),self.secblocks)
     def putblock(self,pt,tg):
         if self.get_block(pt,self.secblocks).name=='empty':
             self.set_block(pt,tg,self.secblocks)
@@ -128,22 +131,43 @@ class chunk:
         for mk in range(DEEPTH):
             for x in range(CHUNKRANGE):
                 for y in range(CHUNKRANGE):
-        '''          
-    def draw(self,player,bs):
+        '''
+        self.chunks=[]
+    def draw(self,player,bs,tick):
         deffpt=point(WINDOW.x/2-player.pt.x+self.relpt.x*CHUNKWID,WINDOW.y/2-player.pt.y+self.relpt.y*CHUNKWID)
         for x in range(CHUNKRANGE):
             for y in range(CHUNKRANGE):
                 s1=self.get_block(point(x,y))
                 s2=self.get_block(point(x,y),self.secblocks)
                 if hasattr(s2,'updata'):
-                    for x in range(3):
-                        for y in range(3):
-                            p=point(x-1,y-1)
-                            s2.updata([s1])
+                    s2.updata(tick)
                 s1.draw(bs,deffpt+point(x*16,y*16))
                 s2.draw(bs,deffpt+point(x*16,y*16))
-                
-class player:
+    def dump(self):
+        self.chunks=[]
+        # begin to convert blocks
+        tempbks=[]
+        tempsecbks=[]
+        for bk in self.blocks:
+            tempbks.append(bk.dump())
+        for secbk in self.secblocks:
+            tempsecbks.append(secbk.dump())
+        self.blocks=tempbks
+        self.secblocks=tempsecbks
+        return self
+    def load(self):
+        bk=[]
+        secbk=[]
+        for it in self.blocks:
+            it.load()
+            bk.append(it)
+        for secit in self.secblocks:
+            secit.load()
+            secbk.append(secit)
+        # load to chunk
+        self.blocks=bk
+        self.secblocks=secbk
+class player(saveable):
     def __init__(self,name,texture,pt=point(0,0)):
         self.name=name
         self.texture=texture
@@ -190,8 +214,6 @@ class player:
             else:
                 self.bag.pop(self.nowselect)
             return ret
-        elif name in RESITEMSS:
-            ret=RESITEMSS[name].copy()
         else:
             # error
             pass
@@ -199,7 +221,12 @@ class player:
         # input 0-MAXITEM-1
         if num<MAXITEM:
             self.nowselect=num
-            
+    # save
+    def dump(self):
+        self.texture=None
+        return self
+    def load(self):
+        self.texture=getresour('player')
 class crafttable(GUI.frame):
     class inlinelabel(GUI.label):
         def __init__(self,table,text,pt,scr,ftcolor,bgcolor=(255,255,255),ft=GUI.nm_font,sid=''):
@@ -208,15 +235,19 @@ class crafttable(GUI.frame):
         def handle(self,mx,my,evt):
             if evt[0]:
                 self.t.setfocus(self.sid)
-    def __init__(self,craftconfig,*args,**kwargs):
+                self.t.crafting(self.sid)
+    def __init__(self,craftconfig,gameobject,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.craftconfig=craftconfig
+        self.game=gameobject
         self.tatget=''
         pt=point(5,50)
-        self.addcont(crafttable.inlinelabel(self,'合成...',point(2,2),self.scr,(150,150,120),(50,100,100),ft=GUI.middle_font,sid='title'))
+        self.addcont(GUI.label(self,'合成...',point(2,2),self.scr,(150,150,120),(50,100,100),ft=GUI.middle_font,sid='title'))
+        self.craftingtable=dict()
         for it,value in self.craftconfig.items():
             need=it+' '+','.join(['%s:%s' %(item,num) for item,num in value.items()])
             self.addcont(crafttable.inlinelabel(self,need,pt,self.scr,(150,150,80),(50,100,100),sid=it))
+            self.craftingtable.update({it:[(item,num) for item,num in value.items()]})
             pt.y+=15
     def handle(self):
         super().handle()
@@ -224,9 +255,14 @@ class crafttable(GUI.frame):
         self.target=sid
     def draw(self):
         super().draw()
-class game:
-    def __init__(self,bs,name,texture,mouse,jsonconfig,pt=point(0,0),nonload=False):
-        self.player=player(name,texture,pt)
+    def crafting(self,sid):
+        targetitem=sid
+        value=self.craftingtable[targetitem]
+        
+        
+class game(saveable):
+    def __init__(self,bs,name,pt=point(0,0),nonload=False):
+        self.player=player(name,getresour('player'),pt)
         self.chunks=dict()
         self.bs=bs
         if not nonload:
@@ -235,15 +271,15 @@ class game:
         self.items=[]
         # mouse vars
         self.mpos=point(0,0)
-        self.mouse=mouse
+        self.mouse=getresour('mouse')
         # board
         self.board=pg.Surface((100,180))
         self.board.fill((50,60,80))
         # config
-        self.config=jsonconfig
+        self.config=getjsonconfig()
         self.guimanager=GUI.framemanager()
         # table
-        self.table=crafttable(self.config[0]['crafttable'],point(WINDOW.x//2-150,WINDOW.y//2-100),300,200,self.bs,sid='craft')
+        self.table=crafttable(self.config[0]['crafttable'],gameobject=self,point(WINDOW.x//2-150,WINDOW.y//2-100),300,200,self.bs,sid='craft')
     def newitem(self,pt,item):
         self.items.append((pt,item))
     def removeitem(self,item):
@@ -303,7 +339,7 @@ class game:
             return None
         pot=self._getckpoint(tp,c.relpt)
         return c.get_block(pot,target=c.blocks if layer==0 else c.secblocks)
-    def getblock(self,pos,block,layer=0):
+    def setblock(self,pos,block,layer=0):
         # layer:0=chunk.blocks 1=self.secblocks
         c=self.getchunk(self.getpoint(tp))
         if not c:
@@ -319,7 +355,9 @@ class game:
             if c.relpt.x-SHOWRADIUS>tx or c.relpt.x+SHOWRADIUS<tx or c.relpt.y-SHOWRADIUS>ty or c.relpt.y+SHOWRADIUS<ty:
                 continue
             i+=1
-            c.draw(self.player,self.bs)
+            # draw chunk
+            tick=pg.time.get_ticks()
+            c.draw(self.player,self.bs,tick)
             for x in range(3):
                 for y in range(3):
                     if x==1 and y==1:continue
@@ -362,15 +400,7 @@ class game:
         p=point(WINDOW.x-90,WINDOW.y-170)
         i=1
         for item,num in self.player.bag:
-            '''
-            if item in config['items']:
-            '''
             dtemp=RESITEMS[item]
-            '''
-            else:
-                print('Warning:machine in bag')
-                continue
-                '''
             if self.player.nowselect==i-1:
                 # draw select
                 pg.draw.rect(self.bs,(200,200,200),pg.Rect(p.x-2,p.y-2,88,16),2)
@@ -385,6 +415,7 @@ class game:
     def mousehandle(self,button,mpos):
         self.mpos=point(mpos.x//16*16,mpos.y//16*16)-point(self.player.pt.x%16,self.player.pt.y%16)
         if button[0]:
+            # left click->delete block
             # tp-> abs block-pos
             tp=self.mpos-point(WINDOW.x//2,WINDOW.y//2)+self.player.pt
             c=self.getchunk(self.getpoint(tp))
@@ -410,3 +441,37 @@ class game:
         else:pass
     def change_select(self,num):
         return self.player.change_select(num)
+    # save
+    def dump(self):
+        # init 
+        tempitems=[]
+        tempchunks={}
+        
+        for pos,it in self.items:
+            # change into pos,name
+            tempitems.append((pos,it.name))
+        for relpt,c in self.chunks.items():
+            tempchunks.update({relpt:c.dump()})
+        self.items=tempitems
+        self.chunks=tempchunks
+        self.table=None
+        self.board=None
+        self.mouse=None
+        self.bs=None
+        self.player.dump()
+        return self
+    def load(self):
+        
+        tempitems=[]
+        tempchunks={}
+        for pos,item in self.items:
+            tempitems.append((pos,getitem(item)))
+        # second:dump chunk
+        for rel_pt,c in self.chunks.items():
+            c.load()
+            tempchunks.update({rel_pt:c})
+        self.__init__(pg.display.get_surface(),self.player.name,nonload=True)
+        self.items=tempitems
+        self.chunks=tempchunks
+        # third: dump player
+        self.player.load()
